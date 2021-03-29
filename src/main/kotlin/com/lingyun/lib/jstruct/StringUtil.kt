@@ -125,10 +125,23 @@ object StringUtil {
         return true
     }
 
-    fun firstFirstCharIndex(expression: String, startIndex: Int, endIndex: Int, expectChar: Char): Int {
+    fun findClosingCharIndex(
+        expression: String,
+        startIndex: Int,
+        endIndex: Int,
+        enterChar: Char,
+        closingChar: Char
+    ): Int {
+        var count = 1
         for (i in startIndex until endIndex) {
-            if (expression[i] == expectChar){
-                return i
+            if (expression[i] == enterChar) {
+                count++
+            } else if (expression[i] == closingChar) {
+                count--
+
+                if (count == 0) {
+                    return i
+                }
             }
         }
 

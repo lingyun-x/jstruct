@@ -20,15 +20,20 @@ import java.nio.ByteBuffer
 * limitations under the License.
 */
 class PackContext(
-    val ctx: NumberEnvironmentExpressionParser.ExpressionContext,
+    val struct: String,
     val byteBuffer: ByteBuffer,
-    val values: List<Any>? = null,
-    var writeIndex: Int = 0
+    val elements: MutableList<Any> = ArrayList(),
+    var currentElementIndex: Int = 0
 ) {
+    val ctx: NumberEnvironmentExpressionParser.ExpressionContext
+
+    init {
+        ctx = NumberEnvironmentExpressionParser.ExpressionContext(struct, 0, struct.length, elements)
+    }
 
     fun unpack(): List<Any> {
         val result = ArrayList<Any>()
-        while (ctx.startIndex < ctx.endIndex) {
+        while (ctx.expressionStartIndex < ctx.expressionEndIndex) {
             val number = getNextNumber()
             val type = getNextType()
             val values = readData(type, number)
@@ -39,42 +44,86 @@ class PackContext(
     }
 
     fun pack(): ByteArray {
-        while (ctx.startIndex < ctx.endIndex) {
+        while (ctx.expressionStartIndex < ctx.expressionEndIndex) {
             val number = getNextNumber()
             val type = getNextType()
 
             write(type, number)
         }
-        return byteBuffer.array()
+        return byteBuffer.array().sliceArray(0 until byteBuffer.position())
     }
 
     fun getNextNumber(): Int {
-        return ctx.getNextNumber().toInt()
+        ctx.currentElementIndex = currentElementIndex
+        val expressionEndIndex = ctx.expressionEndIndex
+
+        //find number expression
+        var eei = ctx.expressionStartIndex
+        while (eei < ctx.expressionEndIndex) {
+            when (ctx.expression[eei]) {
+                in '0'..'9', '(', ')', '$', '+', '-', '*', '/' -> {
+                    eei++
+                }
+                else -> {
+                    break
+                }
+            }
+        }
+
+        ctx.expressionEndIndex = eei
+        val result = ctx.getNumber().toInt()
+
+        ctx.expressionEndIndex = expressionEndIndex
+        return result
     }
 
     fun getNextType(): IStrcutDataType {
-        val c = ctx.expression[ctx.startIndex]
+        val c = ctx.expression[ctx.expressionStartIndex]
         return when (c) {
             'b', 'B', 'h', 'H', 'i', 'I', 'l', 'f', 'd' -> {
-                ctx.startIndex++
+                ctx.expressionStartIndex++
                 BasicDataType(c)
             }
             '[' -> {
-                val endIndex = StringUtil.firstFirstCharIndex(ctx.expression, ctx.startIndex, ctx.endIndex, ']')
-                val typeExpression = ctx.expression.substring(ctx.startIndex + 1, endIndex).trim()
-                if (typeExpression.isEmpty()) {
-                    throw ExpressionException("index:${ctx.startIndex} array must have a type")
+                ctx.expressionStartIndex++
+                val endIndex = StringUtil.findClosingCharIndex(
+                    ctx.expression,
+                    ctx.expressionStartIndex,
+                    ctx.expressionEndIndex,
+                    '[',
+                    ']'
+                )
+                println("expression [${ctx.expressionStartIndex}-${ctx.expressionEndIndex}]")
+                println("[${ctx.expressionStartIndex}-$endIndex]")
+                if (endIndex == -1){
+                    throw ExpressionException("index:${ctx.expressionStartIndex-1} char [ not find closing char ]")
                 }
+
+                val typeExpression = ctx.expression.substring(ctx.expressionStartIndex, endIndex).trim()
+                println("typeExpression:${typeExpression}")
+                if (typeExpression.isEmpty()) {
+                    throw ExpressionException("index:${ctx.expressionStartIndex} array must have a type")
+                }
+
                 if (typeExpression.length == 1) {
+                    ctx.expressionStartIndex = endIndex + 1
                     return ArrayDataType(typeExpression[0])
                 }
-                return ComplexDataType(typeExpression, ctx.startIndex + 1, endIndex - 1)
+                val type = ComplexDataType(typeExpression, ctx.expressionStartIndex, endIndex)
+                ctx.expressionStartIndex = endIndex + 1
+                return type
             }
             else -> {
-                throw ExpressionException("index:${ctx.startIndex} not supprt this typs:${c}")
+                throw ExpressionException("index:${ctx.expressionStartIndex} not supprt this typs:${c}")
             }
         }
     }
+
+    fun addElement(element: Any) {
+        elements.add(element)
+        currentElementIndex++
+    }
+
 
     fun readData(dataType: IStrcutDataType, number: Int): List<Any> {
         val result = ArrayList<Any>()
@@ -82,6 +131,7 @@ class PackContext(
             is BasicDataType -> {
                 for (i in 0 until number) {
                     val value = readBasicData(dataType.type)
+                    addElement(value)
                     result.add(value)
                 }
             }
@@ -89,38 +139,47 @@ class PackContext(
                 when (dataType.itemType) {
                     'b' -> {
                         val value = readByteArray(number)
+                        addElement(value)
                         result.add(value)
                     }
                     'B' -> {
                         val value = readUByteArray(number)
+                        addElement(value)
                         result.add(value)
                     }
                     'h' -> {
                         val value = readShortArray(number)
+                        addElement(value)
                         result.add(value)
                     }
                     'H' -> {
-                        val vaule = readUnsignShortArray(number)
-                        result.add(vaule)
+                        val value = readUnsignShortArray(number)
+                        addElement(value)
+                        result.add(value)
                     }
                     'i' -> {
                         val value = readIntArray(number)
+                        addElement(value)
                         result.add(value)
                     }
                     'I' -> {
                         val value = readUIntArray(number)
+                        addElement(value)
                         result.add(value)
                     }
                     'l' -> {
                         val value = readLongArray(number)
+                        addElement(value)
                         result.add(value)
                     }
                     'f' -> {
                         val value = readFloatArray(number)
+                        addElement(value)
                         result.add(value)
                     }
                     'd' -> {
                         val value = readDoubleArray(number)
+                        addElement(value)
                         result.add(value)
                     }
                     else -> {
@@ -129,17 +188,24 @@ class PackContext(
                 }
             }
             is ComplexDataType -> {
-                val endIndex = ctx.endIndex
-                ctx.startIndex = dataType.structStartIndex
-                ctx.endIndex = dataType.structEndIndex
+                val endIndex = ctx.expressionEndIndex
+                val startIndex = ctx.expressionStartIndex
+
+                val elementStartIndex = ctx.elementStartIndex
+
 
                 for (i in 0 until number) {
+                    ctx.expressionStartIndex = dataType.structStartIndex
+                    ctx.expressionEndIndex = dataType.structEndIndex
+
+                    ctx.elementStartIndex = currentElementIndex
                     val values = unpack()
                     result.addAll(values)
                 }
-                //skip array end ']'
-                ctx.startIndex = ctx.endIndex + 2
-                ctx.endIndex = endIndex
+
+                ctx.elementStartIndex = elementStartIndex
+                ctx.expressionStartIndex = startIndex
+                ctx.expressionEndIndex = endIndex
             }
             else -> {
                 throw IllegalArgumentException("not support this type:${dataType::class}")
@@ -266,39 +332,39 @@ class PackContext(
         when (type) {
             is BasicDataType -> {
                 for (i in 0 until number) {
-                    writeBasicData(type.type, values!![writeIndex++])
+                    writeBasicData(type.type, elements[currentElementIndex++])
                 }
             }
             is ArrayDataType -> {
                 when (type.itemType) {
                     //byte
                     'b' -> {
-                        writeByteArray(values!![writeIndex++])
+                        writeByteArray(elements[currentElementIndex++])
                     }
                     //
                     'B' -> {
-                        writeUByteArray(values!![writeIndex++])
+                        writeUByteArray(elements[currentElementIndex++])
                     }
                     'h' -> {
-                        writeShortArray(values!![writeIndex++])
+                        writeShortArray(elements[currentElementIndex++])
                     }
                     'H' -> {
-                        writeUnsignShortArray(values!![writeIndex++])
+                        writeUnsignShortArray(elements[currentElementIndex++])
                     }
                     'i' -> {
-                        writeIntArray(values!![writeIndex++])
+                        writeIntArray(elements[currentElementIndex++])
                     }
                     'I' -> {
-                        writeUIntArray(values!![writeIndex++])
+                        writeUIntArray(elements[currentElementIndex++])
                     }
                     'l' -> {
-                        writeLongArray(values!![writeIndex++])
+                        writeLongArray(elements[currentElementIndex++])
                     }
                     'f' -> {
-                        writeFloatArray(values!![writeIndex++])
+                        writeFloatArray(elements[currentElementIndex++])
                     }
                     'd' -> {
-                        writeDoubleArray(values!![writeIndex++])
+                        writeDoubleArray(elements[currentElementIndex++])
                     }
                     else -> {
                         throw ExpressionException("not support this type:$type")
@@ -306,15 +372,20 @@ class PackContext(
                 }
             }
             is ComplexDataType -> {
-                val structEndIndex = ctx.endIndex
-                ctx.endIndex = type.structEndIndex
-                ctx.startIndex = type.structStartIndex
+                val endIndex = ctx.expressionEndIndex
+                val startIndex = ctx.expressionStartIndex
+                val esi = ctx.elementStartIndex
+
                 for (i in 0 until number) {
-                    unpack()
+                    ctx.expressionEndIndex = type.structEndIndex
+                    ctx.expressionStartIndex = type.structStartIndex
+                    ctx.elementStartIndex = currentElementIndex
+                    pack()
                 }
-                //skip array end ']'
-                ctx.startIndex = ctx.endIndex + 2
-                ctx.endIndex = structEndIndex
+
+                ctx.elementStartIndex = esi
+                ctx.expressionStartIndex = startIndex
+                ctx.expressionEndIndex = endIndex
             }
         }
     }

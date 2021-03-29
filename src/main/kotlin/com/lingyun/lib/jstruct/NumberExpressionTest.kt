@@ -20,17 +20,31 @@ object NumberExpressionTest {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val expression =
-            "((1+2.23*3*4/$5)*$2+5*4/2-312+((12+23*34)*45+23*46))*((1+$2*$3+4/5))-5*4/2-1-$2/(312+((12+23*34)*45+23*46))-$($2-1)"
-        val ctx = NumberEnvironmentExpressionParser.ExpressionContext(expression, 0, expression.length, ArrayList())
-        ctx.data.addAll(0..10)
-        ctx.data.add(1.0)
+//        var expression =
+//            "((1+2.23*3*4/$5)*$2+5*4/2-312+((12+23*34)*45+23*46))*((1+$2*$3+4/5))-5*4/2-1-$2/(312+((12+23*34)*45+23*46))-$($2-1)"
+//        val ctx = NumberEnvironmentExpressionParser.ExpressionContext(expression, 0, expression.length, ArrayList())
+//        ctx.data.addAll(0..10)
+//        ctx.data.add(1.0)
 
-        println("expression:$expression calculation result:${NumberEnvironmentExpressionParser.parse(expression, ctx)}")
+//        println("expression:$expression calculation result:${NumberEnvironmentExpressionParser.parse(expression, ctx)}")
 
         val result =
             ((1 + 2.23 * 3 * 4 / 5.0) * 2 + 5 * 4 / 2.0 - 312 + ((12 + 23 * 34) * 45 + 23 * 46)) * ((1 + 2 * 3 + 4 / 5.0)) - 5.0 * 4 / 2.0 - 1 - 2.0 / (312 + ((12 + 23 * 34) * 45 + 23 * 46)) - (2 - 1)
 
         println("result:$result")
+
+        val expression = "$-($2*3)"
+        val elmements = ArrayList<Any>()
+        elmements.addAll(0..10)
+        val ctx = NumberEnvironmentExpressionParser.ExpressionContext(
+            expression,
+            0,
+            expression.length,
+            elmements,
+            0,
+            currentElementIndex = elmements.size
+        )
+//        ctx.data.add(1.0)
+        println("expression:$expression calculation result:${NumberEnvironmentExpressionParser.parse(expression, ctx)}")
     }
 }

@@ -28,48 +28,44 @@ object JStrcut {
     fun unpack(data: ByteArray, struct: String): List<Any> {
         var bo = byteOrder
 
-        var startIndex = 0
+        var s  = struct
         when (struct[0]) {
             '>' -> {
                 bo = ByteOrder.BIG_ENDIAN
-                startIndex = 1
+                s = struct.substring(1)
             }
             '<' -> {
                 bo = ByteOrder.LITTLE_ENDIAN
-                startIndex = 1
+                s = struct.substring(1)
             }
         }
 
         val byteBuffer = ByteBuffer.wrap(data)
         byteBuffer.order(bo)
 
-        val context =
-            NumberEnvironmentExpressionParser.ExpressionContext(struct, startIndex, struct.length, ArrayList())
-        val packContext = PackContext(context, byteBuffer)
+        val packContext = PackContext(s, byteBuffer)
         return packContext.unpack()
     }
 
     fun pack(struct: String, values: List<Any>): ByteArray {
         var bo = byteOrder
 
-        var startIndex = 0
+        var s  = struct
         when (struct[0]) {
             '>' -> {
                 bo = ByteOrder.BIG_ENDIAN
-                startIndex = 1
+                s = struct.substring(1)
             }
             '<' -> {
                 bo = ByteOrder.LITTLE_ENDIAN
-                startIndex = 1
+                s = struct.substring(1)
             }
         }
 
         val byteBuffer = ByteBuffer.allocate(1024)
         byteBuffer.order(bo)
 
-        val context =
-            NumberEnvironmentExpressionParser.ExpressionContext(struct, startIndex, struct.length, ArrayList())
-        val packContext = PackContext(context, byteBuffer, values, 0)
+        val packContext = PackContext(s, byteBuffer, values.toMutableList())
 
         return packContext.pack()
     }

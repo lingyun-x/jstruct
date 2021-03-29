@@ -21,20 +21,21 @@ import com.lingyun.lib.jstruct.exception.ExpressionException
 object NumberEnvironmentExpressionParser {
 
     fun parse(expression: String, ctx: ExpressionContext? = null): Double {
-        val context = ctx ?: ExpressionContext(expression, 0, expression.length, ArrayList())
+        val context = ctx ?: ExpressionContext(expression, 0, expression.length)
         if (expression.isEmpty()) {
             throw ExpressionException("expression is empty")
         }
 
-        val startIndex = context.startIndex
-        val endIndex = context.endIndex
-        var number = getNextNumber(context, expression)
+        val elements = context.elements
+        val startIndex = context.expressionStartIndex
+        val endIndex = context.expressionEndIndex
+        var number = getNextNumber(context)
 
-        while (context.startIndex < context.endIndex) {
+        while (context.expressionStartIndex < context.expressionEndIndex) {
             //find next symbol
-            when (expression[context.startIndex]) {
+            when (expression[context.expressionStartIndex]) {
                 '+' -> {
-                    context.startIndex++
+                    context.expressionStartIndex++
                     number += parse(expression, context)
                     break
                 }
@@ -43,102 +44,126 @@ object NumberEnvironmentExpressionParser {
                     break
                 }
                 '*' -> {
-                    context.startIndex++
-                    val nextNumber = getNextNumber(context, expression)
+                    context.expressionStartIndex++
+                    val nextNumber = getNextNumber(context)
                     number *= nextNumber
                 }
                 '/' -> {
-                    context.startIndex++
-                    val nextNumber = getNextNumber(context, expression)
+                    context.expressionStartIndex++
+                    val nextNumber = getNextNumber(context)
                     number /= nextNumber
                 }
                 else -> {
-                    throw ExpressionException("index:${context.startIndex} need a calculating symbol!!")
+                    throw ExpressionException("index:${context.expressionStartIndex} need a calculating symbol!!")
                 }
             }
         }
 
-        println(
-            "parse [${startIndex}-${endIndex}] ${
-                expression.substring(
-                    startIndex,
-                    endIndex
-                )
-            } "
-        )
-        println("parse [${startIndex}-${endIndex}] result:$number")
+//        println(
+//            "parse [${startIndex}-${endIndex}] ${
+//                expression.substring(
+//                    startIndex,
+//                    endIndex
+//                )
+//            } "
+//        )
+//        println("parse [${startIndex}-${endIndex}] result:$number")
         return number
     }
 
-    fun getNextNumber(ctx: ExpressionContext, expression: String): Double {
-        val numberEndIndex = StringUtil.getNextNumberExpressionEnd(expression, ctx.startIndex, ctx.endIndex)
-        if (numberEndIndex == -1) {
-            throw ExpressionException("index:${ctx.startIndex} not a number :${expression[ctx.startIndex]}")
-        }
-        val result = when (expression[ctx.startIndex]) {
-            '-' -> {
-                ctx.startIndex++
-                val endIndex = ctx.endIndex
-                ctx.endIndex = numberEndIndex + 1
-                val number = getNextNumber(ctx, expression)
+    fun getNextNumber(ctx: ExpressionContext): Double {
+        val expression = ctx.expression
+        val elements = ctx.elements
 
-                ctx.startIndex = numberEndIndex + 1
-                ctx.endIndex = endIndex
+        val numberEndIndex =
+            StringUtil.getNextNumberExpressionEnd(expression, ctx.expressionStartIndex, ctx.expressionEndIndex)
+        if (numberEndIndex == -1) {
+            throw ExpressionException("index:${ctx.expressionStartIndex} not a number :${expression[ctx.expressionStartIndex]}")
+        }
+        val result = when (expression[ctx.expressionStartIndex]) {
+            '-' -> {
+                ctx.expressionStartIndex++
+                val endIndex = ctx.expressionEndIndex
+                ctx.expressionEndIndex = numberEndIndex + 1
+                val number = getNextNumber(ctx)
+
+                ctx.expressionStartIndex = numberEndIndex + 1
+                ctx.expressionEndIndex = endIndex
                 -number
             }
             '(' -> {
-                ctx.startIndex++
-                val endIndex = ctx.endIndex
-                ctx.endIndex = numberEndIndex
+                ctx.expressionStartIndex++
+                val endIndex = ctx.expressionEndIndex
+                ctx.expressionEndIndex = numberEndIndex
                 val number = parse(expression, ctx)
 
-                ctx.startIndex = numberEndIndex + 1
-                ctx.endIndex = endIndex
+                ctx.expressionStartIndex = numberEndIndex + 1
+                ctx.expressionEndIndex = endIndex
                 number
             }
             '$' -> {
-                ctx.startIndex++
-                when (expression[ctx.startIndex]) {
+                println(
+                    "expression[${ctx.expressionStartIndex}-${ctx.expressionEndIndex}]:${
+                        ctx.expression.substring(
+                            ctx.expressionStartIndex,
+                            ctx.expressionEndIndex
+                        )
+                    }"
+                )
+
+                ctx.expressionStartIndex++
+                when (expression[ctx.expressionStartIndex]) {
                     in '0'..'9' -> {
-                        val envIndex = expression.substring(ctx.startIndex, numberEndIndex + 1).toInt()
-                        val number = ctx.data[envIndex].toString().toDouble()
-                        ctx.startIndex = numberEndIndex + 1
+                        var envIndex =
+                            expression.substring(ctx.expressionStartIndex, numberEndIndex + 1).toString().toInt()
+                        envIndex += ctx.elementStartIndex
+                        println("elementIndex:$envIndex")
+
+                        val number = elements[envIndex].toString().toDouble()
+                        ctx.expressionStartIndex = numberEndIndex + 1
                         number
                     }
                     else -> {
-                        val endIndex = ctx.endIndex
-                        ctx.endIndex = numberEndIndex + 1
+                        val endIndex = ctx.expressionEndIndex
+                        ctx.expressionEndIndex = numberEndIndex + 1
 
-                        val envIndex = getNextNumber(ctx, expression).toInt()
+                        var envIndex = getNextNumber(ctx).toInt()
 
-                        ctx.startIndex = numberEndIndex + 1
-                        ctx.endIndex = endIndex
-                        val number = ctx.data[envIndex].toString().toDouble()
+                        if (envIndex < 0) {
+                            envIndex += ctx.currentElementIndex
+                        } else {
+                            envIndex += ctx.elementStartIndex
+                        }
+
+                        ctx.expressionStartIndex = numberEndIndex + 1
+                        ctx.expressionEndIndex = endIndex
+                        val number = elements[envIndex].toString().toDouble()
                         number
                     }
                 }
             }
             in '0'..'9' -> {
-                val number = expression.substring(ctx.startIndex, numberEndIndex + 1).toDouble()
-                ctx.startIndex = numberEndIndex + 1
+                val number = expression.substring(ctx.expressionStartIndex, numberEndIndex + 1).toDouble()
+                ctx.expressionStartIndex = numberEndIndex + 1
                 number
             }
             else -> {
-                throw ExpressionException("index:${ctx.startIndex} is need a number")
+                throw ExpressionException("index:${ctx.expressionStartIndex} is need a number")
             }
         }
         return result
     }
 
-
     class ExpressionContext(
         val expression: String,
-        var startIndex: Int,
-        var endIndex: Int,
-        val data: ArrayList<Any>
+        var expressionStartIndex: Int,
+        var expressionEndIndex: Int,
+        val elements: List<Any> = ArrayList(),
+        var elementStartIndex: Int = 0,
+        var currentElementIndex: Int = 0
     ) {
-        fun getNextNumber(): Double {
-            return NumberEnvironmentExpressionParser.getNextNumber(this, expression)
+        fun getNumber(): Double {
+            return NumberEnvironmentExpressionParser.parse(expression, this)
         }
     }
 
