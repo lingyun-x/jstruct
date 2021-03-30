@@ -21,14 +21,36 @@ import java.nio.ByteOrder
 */
 object JStrcut {
 
-    val ALLOW_BASIC_TYPE = arrayOf('b', 'B', 'h', 'H', 'i', 'I', 'l', 'f', 'd')
+    val ALLOW_BASIC_TYPE = arrayOf('b', 'B', 'c', 'h', 'H', 'i', 'I', 'l', 'f', 'd')
 
-    var byteOrder = ByteOrder.BIG_ENDIAN
+    var byteOrder: ByteOrder = ByteOrder.BIG_ENDIAN
 
-    fun unpack(data: ByteArray, struct: String): List<Any> {
+    fun newPackContext(struct: String, elements: List<Any>): PackContext {
         var bo = byteOrder
 
-        var s  = struct
+        var s = struct
+        when (struct[0]) {
+            '>' -> {
+                bo = ByteOrder.BIG_ENDIAN
+                s = struct.substring(1)
+            }
+            '<' -> {
+                bo = ByteOrder.LITTLE_ENDIAN
+                s = struct.substring(1)
+            }
+        }
+        val byteBuffer = ByteBuffer.allocate(1024)
+        byteBuffer.order(bo)
+
+        val context = PackContext(struct, byteBuffer, elements)
+        return context
+    }
+
+    fun newUnPackContext(struct: String, data: ByteArray): UnpackContext {
+
+        var bo = byteOrder
+
+        var s = struct
         when (struct[0]) {
             '>' -> {
                 bo = ByteOrder.BIG_ENDIAN
@@ -43,30 +65,7 @@ object JStrcut {
         val byteBuffer = ByteBuffer.wrap(data)
         byteBuffer.order(bo)
 
-        val packContext = PackContext(s, byteBuffer)
-        return packContext.unpack()
-    }
-
-    fun pack(struct: String, values: List<Any>): ByteArray {
-        var bo = byteOrder
-
-        var s  = struct
-        when (struct[0]) {
-            '>' -> {
-                bo = ByteOrder.BIG_ENDIAN
-                s = struct.substring(1)
-            }
-            '<' -> {
-                bo = ByteOrder.LITTLE_ENDIAN
-                s = struct.substring(1)
-            }
-        }
-
-        val byteBuffer = ByteBuffer.allocate(1024)
-        byteBuffer.order(bo)
-
-        val packContext = PackContext(s, byteBuffer, values.toMutableList())
-
-        return packContext.pack()
+        val context = UnpackContext(struct, byteBuffer)
+        return context
     }
 }

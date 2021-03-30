@@ -20,26 +20,35 @@ import java.nio.ByteBuffer
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-class PackContext(
+class UnpackContext(
     val struct: String,
     val byteBuffer: ByteBuffer,
-    val elements: List<Any> = ArrayList(),
-    var currentElementIndex: Int = 0
 ) {
     val ctx: NumberEnvironmentExpressionParser.ExpressionContext
+    val elements: MutableList<Any> = ArrayList()
+    var currentElementIndex: Int = 0
 
     init {
         ctx = NumberEnvironmentExpressionParser.ExpressionContext(struct, 0, struct.length, elements)
     }
 
-    fun pack(): ByteArray {
+    fun unpack(): List<Any> {
         while (ctx.expressionStartIndex < ctx.expressionEndIndex) {
-            val number = getNextNumber()
-            val type = getNextType()
+            getNextElement()
 
-            write(type, number)
         }
-        return byteBuffer.array().sliceArray(0 until byteBuffer.position())
+        return elements
+    }
+
+    fun getNextElement(): List<Any> {
+        val number = getNextNumber()
+        val type = getNextType()
+        val values = readData(type, number)
+
+        values.forEach {
+            addElement(it)
+        }
+        return values
     }
 
     fun getNextNumber(): Int {
@@ -69,7 +78,7 @@ class PackContext(
     fun getNextType(): IStrcutDataType {
         val c = ctx.expression[ctx.expressionStartIndex]
         return when (c) {
-            'b', 'B','c', 'h', 'H', 'i', 'I', 'l', 'f', 'd' -> {
+            'b', 'B', 'c', 'h', 'H', 'i', 'I', 'l', 'f', 'd' -> {
                 ctx.expressionStartIndex++
                 BasicDataType(c)
             }
@@ -82,6 +91,7 @@ class PackContext(
                     '[',
                     ']'
                 )
+
                 if (endIndex == -1) {
                     throw ExpressionException("index:${ctx.expressionStartIndex - 1} char [ not find closing char ]")
                 }
@@ -105,103 +115,123 @@ class PackContext(
         }
     }
 
-    fun write(type: IStrcutDataType, number: Int) {
-        when (type) {
+    fun addElement(element: Any) {
+        elements.add(element)
+        currentElementIndex++
+    }
+
+    fun readData(dataType: IStrcutDataType, number: Int): List<Any> {
+        val result = ArrayList<Any>()
+        when (dataType) {
             is BasicDataType -> {
                 for (i in 0 until number) {
-                    writeBasicData(type.type, elements[currentElementIndex++])
+                    val value = readBasicData(dataType.type)
+                    result.add(value)
                 }
             }
             is ArrayDataType -> {
-                when (type.itemType) {
-                    //byte
+                when (dataType.itemType) {
                     'b' -> {
-                        byteBuffer.writeByteArray(elements[currentElementIndex++])
+                        val value = byteBuffer.readByteArray(number)
+                        result.add(value)
                     }
-                    //
                     'B' -> {
-                        byteBuffer.writeUByteArray(elements[currentElementIndex++])
+                        val value = byteBuffer.readUByteArray(number)
+                        result.add(value)
                     }
                     'c' -> {
-                        byteBuffer.writeCharArray(elements[currentElementIndex++])
+                        val value = byteBuffer.readCharArray(number)
+                        result.add(value)
                     }
                     'h' -> {
-                        byteBuffer.writeShortArray(elements[currentElementIndex++])
+                        val value = byteBuffer.readShortArray(number)
+                        result.add(value)
                     }
                     'H' -> {
-                        byteBuffer.writeUnsignShortArray(elements[currentElementIndex++])
+                        val value = byteBuffer.readUShortArray(number)
+                        result.add(value)
                     }
                     'i' -> {
-                        byteBuffer.writeIntArray(elements[currentElementIndex++])
+                        val value = byteBuffer.readIntArray(number)
+                        result.add(value)
                     }
                     'I' -> {
-                        byteBuffer.writeUIntArray(elements[currentElementIndex++])
+                        val value = byteBuffer.readUIntArray(number)
+                        result.add(value)
                     }
                     'l' -> {
-                        byteBuffer.writeLongArray(elements[currentElementIndex++])
+                        val value = byteBuffer.readLongArray(number)
+                        result.add(value)
                     }
                     'f' -> {
-                        byteBuffer.writeFloatArray(elements[currentElementIndex++])
+                        val value = byteBuffer.readFloatArray(number)
+                        result.add(value)
                     }
                     'd' -> {
-                        byteBuffer.writeDoubleArray(elements[currentElementIndex++])
+                        val value = byteBuffer.readDoubleArray(number)
+                        result.add(value)
                     }
                     else -> {
-                        throw ExpressionException("not support this type:$type")
+                        throw IllegalArgumentException("not support this type:${dataType.itemType}")
                     }
                 }
             }
             is ComplexDataType -> {
-                val complexStruct = ctx.expression.substring(type.structStartIndex, type.structEndIndex)
-                val complexElementList = elements[currentElementIndex++] as List<Any>
+                val complexStruct = ctx.expression.substring(dataType.structStartIndex, dataType.structEndIndex)
+                val values = ArrayList<Any>()
 
                 for (i in 0 until number) {
-                    val complexElements = complexElementList[i] as MutableList<Any>
-                    val packContext2 = PackContext(complexStruct, byteBuffer, complexElements, 0)
-                    packContext2.pack()
+                    val unpackContext = UnpackContext(complexStruct, byteBuffer)
+                    val vs = unpackContext.unpack()
+                    values.add(vs)
                 }
+
+                result.add(values)
+            }
+            else -> {
+                throw IllegalArgumentException("not support this type:${dataType::class}")
             }
         }
+
+        return result
     }
 
-    fun writeBasicData(type: Char, value: Any) {
-        when (type) {
+    fun readBasicData(type: Char): Any {
+        return when (type) {
             //byte
             'b' -> {
-                byteBuffer.put(value as Byte)
+                byteBuffer.get()
             }
             //
             'B' -> {
-                byteBuffer.put((value as Short).toByte())
-            }
-            'c' -> {
-                byteBuffer.putChar(value as Char)
+                byteBuffer.get().toUByte().toShort()
             }
             'h' -> {
-                byteBuffer.putShort((value as Short))
+                byteBuffer.getShort()
             }
             'H' -> {
-                byteBuffer.putShort((value as Int).toShort())
+                byteBuffer.getShort().toUShort().toInt()
             }
             'i' -> {
-                byteBuffer.putInt(value as Int)
+                byteBuffer.getInt()
             }
             'I' -> {
-                byteBuffer.putInt((value as Long).toInt())
+                byteBuffer.getInt().toUInt().toLong()
             }
             'l' -> {
-                byteBuffer.putLong(value as Long)
+                byteBuffer.getLong()
             }
             'f' -> {
-                byteBuffer.putFloat(value as Float)
+                byteBuffer.getFloat()
             }
             'd' -> {
-                byteBuffer.putDouble(value as Double)
+                byteBuffer.getDouble()
             }
             else -> {
                 throw ExpressionException("not support this type:$type")
             }
         }
     }
+
 
 }

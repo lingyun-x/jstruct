@@ -101,7 +101,7 @@ object NumberEnvironmentExpressionParser {
                 ctx.expressionEndIndex = endIndex
                 number
             }
-            '$' -> {
+            '@' -> {
                 println(
                     "expression[${ctx.expressionStartIndex}-${ctx.expressionEndIndex}]:${
                         ctx.expression.substring(

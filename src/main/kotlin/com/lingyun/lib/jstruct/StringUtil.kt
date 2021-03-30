@@ -55,7 +55,7 @@ object StringUtil {
             in '0'..'9' -> {
                 return getNumberEndIndex(expression, startIndex, endIndex)
             }
-            '$' -> {
+            '@' -> {
                 if (endIndex > startIndex + 1) {
                     when (expression[startIndex + 1]) {
                         '(' -> {
@@ -67,7 +67,7 @@ object StringUtil {
                         }
                     }
                 } else {
-                    throw ExpressionException("index:$startIndex '$' not have any param")
+                    throw ExpressionException("index:$startIndex '@' not have any param")
                 }
             }
             else -> {
