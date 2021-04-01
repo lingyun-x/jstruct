@@ -25,6 +25,21 @@ internal class JStructTest {
 
 
     @Test
+    fun testWhiteSpace(){
+        val struct = "1i i 1i"
+        val aint0 = 0
+        val aint1 = 1
+        val aint2 = 2
+
+        val elements = listOf<Any>(aint0,aint1,aint2)
+        val bytes = JStruct.pack(struct,elements)
+        println("bytes:${HexUtil.bytesToHexSpace(bytes)}")
+        val values = JStruct.unpack(struct, bytes)
+        assertEquals(aint0,values[0])
+        assertEquals(aint1,values[1])
+        assertEquals(aint2,values[2])
+    }
+    @Test
     fun testCharType() {
         val struct = "(1+2+3)c"
         val chars: List<Char> = listOf('0', '1', '2', '3', '4', '5')

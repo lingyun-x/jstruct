@@ -25,6 +25,21 @@ open class JStructContext(
 
     fun getNextNumber(): Int {
         val expressionEndIndex = ctx.expressionEndIndex
+        //skip white space
+        var firstChar = ctx.expression[ctx.expressionStartIndex]
+
+        while (firstChar == ' ') {
+            ctx.expressionStartIndex++
+            firstChar = ctx.expression[ctx.expressionStartIndex]
+        }
+
+        if (firstChar in JStruct.ALLOW_BASIC_TYPE) {
+            return 1
+        }
+
+        if (firstChar == '[') {
+            return 1
+        }
 
         //find number expression
         var eei = ctx.expressionStartIndex
