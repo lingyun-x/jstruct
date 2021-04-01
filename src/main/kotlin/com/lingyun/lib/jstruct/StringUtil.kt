@@ -129,12 +129,12 @@ object StringUtil {
         expression: String,
         startIndex: Int,
         endIndex: Int,
-        enterChar: Char,
+        leftChar: Char,
         closingChar: Char
     ): Int {
         var count = 1
         for (i in startIndex until endIndex) {
-            if (expression[i] == enterChar) {
+            if (expression[i] == leftChar) {
                 count++
             } else if (expression[i] == closingChar) {
                 count--

@@ -16,12 +16,12 @@ package com.lingyun.lib.jstruct
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-interface IStrcutDataType {
-}
-
+interface IStrcutDataType
 
 class BasicDataType(val type: Char) : IStrcutDataType
 
-class ArrayDataType(val itemType: Char) : IStrcutDataType
+class ArrayDataType(val componentType: Char) : IStrcutDataType
 
 class ComplexDataType(val typeExpression: String, val structStartIndex: Int, val structEndIndex: Int) : IStrcutDataType
+
+class StringDataType() : IStrcutDataType

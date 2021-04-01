@@ -26,9 +26,6 @@ object NumberEnvironmentExpressionParser {
             throw ExpressionException("expression is empty")
         }
 
-        val elements = context.elements
-        val startIndex = context.expressionStartIndex
-        val endIndex = context.expressionEndIndex
         var number = getNextNumber(context)
 
         while (context.expressionStartIndex < context.expressionEndIndex) {
@@ -58,16 +55,6 @@ object NumberEnvironmentExpressionParser {
                 }
             }
         }
-
-//        println(
-//            "parse [${startIndex}-${endIndex}] ${
-//                expression.substring(
-//                    startIndex,
-//                    endIndex
-//                )
-//            } "
-//        )
-//        println("parse [${startIndex}-${endIndex}] result:$number")
         return number
     }
 
@@ -102,22 +89,12 @@ object NumberEnvironmentExpressionParser {
                 number
             }
             '@' -> {
-                println(
-                    "expression[${ctx.expressionStartIndex}-${ctx.expressionEndIndex}]:${
-                        ctx.expression.substring(
-                            ctx.expressionStartIndex,
-                            ctx.expressionEndIndex
-                        )
-                    }"
-                )
-
                 ctx.expressionStartIndex++
                 when (expression[ctx.expressionStartIndex]) {
                     in '0'..'9' -> {
                         var envIndex =
                             expression.substring(ctx.expressionStartIndex, numberEndIndex + 1).toString().toInt()
                         envIndex += ctx.elementStartIndex
-                        println("elementIndex:$envIndex")
 
                         val number = elements[envIndex].toString().toDouble()
                         ctx.expressionStartIndex = numberEndIndex + 1

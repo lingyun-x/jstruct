@@ -2,6 +2,7 @@ package com.lingyun.lib.jstruct
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.charset.Charset
 
 /*
 * Created by mc_luo on 2021/3/23 .
@@ -19,11 +20,22 @@ import java.nio.ByteOrder
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-object JStrcut {
+object JStruct {
 
-    val ALLOW_BASIC_TYPE = arrayOf('b', 'B', 'c', 'h', 'H', 'i', 'I', 'l', 'f', 'd')
+    val ALLOW_BASIC_TYPE = arrayOf('b', 'B', 'c', 'h', 'H', 'i', 'I', 'l', 'f', 'd', 's')
 
     var byteOrder: ByteOrder = ByteOrder.BIG_ENDIAN
+    var charset: Charset = Charset.forName("UTF-8")
+
+    fun pack(struct: String, elements: List<Any>): ByteArray {
+        val context = newPackContext(struct, elements)
+        return context.pack()
+    }
+
+    fun unpack(struct: String, data: ByteArray): List<Any> {
+        val context = newUnPackContext(struct, data)
+        return context.unpack()
+    }
 
     fun newPackContext(struct: String, elements: List<Any>): PackContext {
         var bo = byteOrder
@@ -47,7 +59,6 @@ object JStrcut {
     }
 
     fun newUnPackContext(struct: String, data: ByteArray): UnpackContext {
-
         var bo = byteOrder
 
         var s = struct

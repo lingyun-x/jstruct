@@ -1,6 +1,7 @@
 package com.lingyun.lib.jstruct.extension
 
 import java.nio.ByteBuffer
+import java.nio.charset.Charset
 
 /*
 * Created by mc_luo on 2021/3/30 .
@@ -18,7 +19,10 @@ import java.nio.ByteBuffer
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
+fun ByteBuffer.readString(byteNumber: Int, charset: Charset): String {
+    val byteArray = readByteArray(byteNumber)
+    return String(byteArray, charset)
+}
 
 fun ByteBuffer.readByteArray(size: Int): ByteArray {
     val bytes = ByteArray(size)
@@ -104,6 +108,10 @@ fun ByteBuffer.readDoubleArray(size: Int): DoubleArray {
     return ds
 }
 
+fun ByteBuffer.writeString(s: String, charset: Charset) {
+    val bytes = s.toByteArray(charset)
+    writeByteArray(bytes)
+}
 
 fun ByteBuffer.writeByteArray(value: Any) {
     val bytes = value as ByteArray
@@ -115,9 +123,9 @@ fun ByteBuffer.writeUByteArray(value: Any) {
     put(bytes)
 }
 
-fun ByteBuffer.writeCharArray(value: Any){
+fun ByteBuffer.writeCharArray(value: Any) {
     val chars = value as CharArray
-    for (c in  chars){
+    for (c in chars) {
         putChar(c)
     }
 }

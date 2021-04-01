@@ -26,7 +26,6 @@ class UnpackContext(
 ) {
     val ctx: NumberEnvironmentExpressionParser.ExpressionContext
     val elements: MutableList<Any> = ArrayList()
-    var currentElementIndex: Int = 0
 
     init {
         ctx = NumberEnvironmentExpressionParser.ExpressionContext(struct, 0, struct.length, elements)
@@ -52,7 +51,6 @@ class UnpackContext(
     }
 
     fun getNextNumber(): Int {
-        ctx.currentElementIndex = currentElementIndex
         val expressionEndIndex = ctx.expressionEndIndex
 
         //find number expression
@@ -81,6 +79,10 @@ class UnpackContext(
             'b', 'B', 'c', 'h', 'H', 'i', 'I', 'l', 'f', 'd' -> {
                 ctx.expressionStartIndex++
                 BasicDataType(c)
+            }
+            's' -> {
+                ctx.expressionStartIndex++
+                StringDataType()
             }
             '[' -> {
                 ctx.expressionStartIndex++
@@ -117,7 +119,7 @@ class UnpackContext(
 
     fun addElement(element: Any) {
         elements.add(element)
-        currentElementIndex++
+        ctx.currentElementIndex++
     }
 
     fun readData(dataType: IStrcutDataType, number: Int): List<Any> {
@@ -129,8 +131,12 @@ class UnpackContext(
                     result.add(value)
                 }
             }
+            is StringDataType -> {
+                val value = readString(number)
+                result.add(value)
+            }
             is ArrayDataType -> {
-                when (dataType.itemType) {
+                when (dataType.componentType) {
                     'b' -> {
                         val value = byteBuffer.readByteArray(number)
                         result.add(value)
@@ -172,7 +178,7 @@ class UnpackContext(
                         result.add(value)
                     }
                     else -> {
-                        throw IllegalArgumentException("not support this type:${dataType.itemType}")
+                        throw IllegalArgumentException("not support this type:${dataType.componentType}")
                     }
                 }
             }
@@ -196,6 +202,12 @@ class UnpackContext(
         return result
     }
 
+    fun readString(number: Int): String {
+        val bytes = ByteArray(number)
+        byteBuffer.get(bytes)
+        return String(bytes, JStruct.charset)
+    }
+
     fun readBasicData(type: Char): Any {
         return when (type) {
             //byte
@@ -205,6 +217,9 @@ class UnpackContext(
             //
             'B' -> {
                 byteBuffer.get().toUByte().toShort()
+            }
+            'c'->{
+                byteBuffer.getChar()
             }
             'h' -> {
                 byteBuffer.getShort()

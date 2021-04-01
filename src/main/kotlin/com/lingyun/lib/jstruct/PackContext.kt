@@ -24,7 +24,6 @@ class PackContext(
     val struct: String,
     val byteBuffer: ByteBuffer,
     val elements: List<Any> = ArrayList(),
-    var currentElementIndex: Int = 0
 ) {
     val ctx: NumberEnvironmentExpressionParser.ExpressionContext
 
@@ -43,7 +42,6 @@ class PackContext(
     }
 
     fun getNextNumber(): Int {
-        ctx.currentElementIndex = currentElementIndex
         val expressionEndIndex = ctx.expressionEndIndex
 
         //find number expression
@@ -69,9 +67,13 @@ class PackContext(
     fun getNextType(): IStrcutDataType {
         val c = ctx.expression[ctx.expressionStartIndex]
         return when (c) {
-            'b', 'B','c', 'h', 'H', 'i', 'I', 'l', 'f', 'd' -> {
+            'b', 'B', 'c', 'h', 'H', 'i', 'I', 'l', 'f', 'd' -> {
                 ctx.expressionStartIndex++
                 BasicDataType(c)
+            }
+            's' -> {
+                ctx.expressionStartIndex++
+                StringDataType()
             }
             '[' -> {
                 ctx.expressionStartIndex++
@@ -109,42 +111,45 @@ class PackContext(
         when (type) {
             is BasicDataType -> {
                 for (i in 0 until number) {
-                    writeBasicData(type.type, elements[currentElementIndex++])
+                    writeBasicData(type.type, elements[ctx.currentElementIndex++])
                 }
             }
+            is StringDataType -> {
+                writeString(elements[ctx.currentElementIndex++] as String, number)
+            }
             is ArrayDataType -> {
-                when (type.itemType) {
+                when (type.componentType) {
                     //byte
                     'b' -> {
-                        byteBuffer.writeByteArray(elements[currentElementIndex++])
+                        byteBuffer.writeByteArray(elements[ctx.currentElementIndex++])
                     }
                     //
                     'B' -> {
-                        byteBuffer.writeUByteArray(elements[currentElementIndex++])
+                        byteBuffer.writeUByteArray(elements[ctx.currentElementIndex++])
                     }
                     'c' -> {
-                        byteBuffer.writeCharArray(elements[currentElementIndex++])
+                        byteBuffer.writeCharArray(elements[ctx.currentElementIndex++])
                     }
                     'h' -> {
-                        byteBuffer.writeShortArray(elements[currentElementIndex++])
+                        byteBuffer.writeShortArray(elements[ctx.currentElementIndex++])
                     }
                     'H' -> {
-                        byteBuffer.writeUnsignShortArray(elements[currentElementIndex++])
+                        byteBuffer.writeUnsignShortArray(elements[ctx.currentElementIndex++])
                     }
                     'i' -> {
-                        byteBuffer.writeIntArray(elements[currentElementIndex++])
+                        byteBuffer.writeIntArray(elements[ctx.currentElementIndex++])
                     }
                     'I' -> {
-                        byteBuffer.writeUIntArray(elements[currentElementIndex++])
+                        byteBuffer.writeUIntArray(elements[ctx.currentElementIndex++])
                     }
                     'l' -> {
-                        byteBuffer.writeLongArray(elements[currentElementIndex++])
+                        byteBuffer.writeLongArray(elements[ctx.currentElementIndex++])
                     }
                     'f' -> {
-                        byteBuffer.writeFloatArray(elements[currentElementIndex++])
+                        byteBuffer.writeFloatArray(elements[ctx.currentElementIndex++])
                     }
                     'd' -> {
-                        byteBuffer.writeDoubleArray(elements[currentElementIndex++])
+                        byteBuffer.writeDoubleArray(elements[ctx.currentElementIndex++])
                     }
                     else -> {
                         throw ExpressionException("not support this type:$type")
@@ -153,15 +158,23 @@ class PackContext(
             }
             is ComplexDataType -> {
                 val complexStruct = ctx.expression.substring(type.structStartIndex, type.structEndIndex)
-                val complexElementList = elements[currentElementIndex++] as List<Any>
+                val complexElementList = elements[ctx.currentElementIndex++] as List<Any>
 
                 for (i in 0 until number) {
                     val complexElements = complexElementList[i] as MutableList<Any>
-                    val packContext2 = PackContext(complexStruct, byteBuffer, complexElements, 0)
+                    val packContext2 = PackContext(complexStruct, byteBuffer, complexElements)
                     packContext2.pack()
                 }
             }
         }
+    }
+
+    fun writeString(value: String, number: Int) {
+        val bytes = (value as String).toByteArray(JStruct.charset)
+        if (bytes.size != number) {
+            throw ExpressionException("string bytes size != number")
+        }
+        byteBuffer.writeByteArray(bytes)
     }
 
     fun writeBasicData(type: Char, value: Any) {
