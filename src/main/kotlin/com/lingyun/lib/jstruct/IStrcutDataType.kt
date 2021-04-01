@@ -22,6 +22,9 @@ class BasicDataType(val type: Char) : IStrcutDataType
 
 class ArrayDataType(val componentType: Char) : IStrcutDataType
 
+class ArrayComplexDataType(val typeExpression: String, val structStartIndex: Int, val structEndIndex: Int) :
+    IStrcutDataType
+
 class ComplexDataType(val typeExpression: String, val structStartIndex: Int, val structEndIndex: Int) : IStrcutDataType
 
 class StringDataType() : IStrcutDataType

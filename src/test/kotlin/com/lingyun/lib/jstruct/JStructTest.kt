@@ -115,13 +115,13 @@ internal class JStructTest {
 
     @Test
     fun testComplexType() {
-        val struct = "1i1[1i10s]"
+        val struct = "1i2{1i10s}"
         val s = "0123456789"
         val slen: Int = s.toByteArray(JStruct.charset).size
         val complex = listOf<Any>(slen, s)
 
         val clen: Int = 2
-        val elements: List<Any> = listOf(clen, complex)
+        val elements: List<Any> = listOf(clen, complex, complex)
         val bytes = JStruct.pack(struct, elements)
         println("bytes:${HexUtil.bytesToHexSpace(bytes)}")
 
@@ -130,9 +130,11 @@ internal class JStructTest {
         assertEquals(clen, unpackElements[0])
 
         val unpackComplex = unpackElements[1] as List<Any>
+        val unpackComplex2 = unpackElements[2] as List<Any>
 
         for (i in complex.indices) {
             assertEquals(complex[i], unpackComplex[i])
+            assertEquals(complex[i], unpackComplex2[i])
         }
 
     }

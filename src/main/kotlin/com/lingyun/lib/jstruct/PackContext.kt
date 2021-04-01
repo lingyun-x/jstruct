@@ -94,17 +94,21 @@ class PackContext(
             }
             is ComplexDataType -> {
                 val complexStruct = ctx.expression.substring(type.structStartIndex, type.structEndIndex)
-                val complexElementList = elements[ctx.currentElementIndex++] as List<Any>
 
-                if (number == 1) {
+                for (i in 0 until number) {
+                    val complexElementList = elements[ctx.currentElementIndex++] as List<Any>
                     val packContext2 = PackContext(complexStruct, byteBuffer, complexElementList)
                     packContext2.pack()
-                } else {
-                    for (i in 0 until number) {
-                        val complexElements = complexElementList[i] as MutableList<Any>
-                        val packContext2 = PackContext(complexStruct, byteBuffer, complexElements)
-                        packContext2.pack()
-                    }
+                }
+            }
+            is ArrayComplexDataType -> {
+                val complexStruct = ctx.expression.substring(type.structStartIndex, type.structEndIndex)
+                val complexElementList = elements[ctx.currentElementIndex++] as List<Any>
+
+                for (i in 0 until number) {
+                    val complexElements = complexElementList[i] as MutableList<Any>
+                    val packContext2 = PackContext(complexStruct, byteBuffer, complexElements)
+                    packContext2.pack()
                 }
             }
         }
