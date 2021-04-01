@@ -183,6 +183,32 @@ val struct ="1i2[1i10s]"
 val s = "0123456789"
 val slen :Int = s.toByteArray(JStruct.charset).size
 val complex = listOf<Any>(slen,s)
+
+val clen :Int= 1
+val elements:List<Any> = listOf(clen,complex)
+val bytes = JStruct.pack(struct,elements)
+println("bytes:${HexUtil.bytesToHexSpace(bytes)}")
+//bytes:00 00 00 02 00 00 00 0A 30 31 32 33 34 35 36 37 38 39 
+
+val unpackElements  = JStruct.unpack(struct,bytes)
+assertEquals(clen,unpackElements[0])
+val unpackComplex = unpackElements[1] as List<Any>
+for(i in complex.indices){
+    assertEquals(complex[i],unpackComplex[i])
+}
+```
+
+
+
+
+
+### Complex Array Type
+
+```kotlin
+val struct ="1i2[1i10s]"
+val s = "0123456789"
+val slen :Int = s.toByteArray(JStruct.charset).size
+val complex = listOf<Any>(slen,s)
 val complexArray :List<Any> = listOf(complex,complex)
 
 val clen :Int= 2

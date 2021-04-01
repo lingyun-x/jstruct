@@ -25,20 +25,21 @@ internal class JStructTest {
 
 
     @Test
-    fun testWhiteSpace(){
+    fun testWhiteSpace() {
         val struct = "1i i 1i"
         val aint0 = 0
         val aint1 = 1
         val aint2 = 2
 
-        val elements = listOf<Any>(aint0,aint1,aint2)
-        val bytes = JStruct.pack(struct,elements)
+        val elements = listOf<Any>(aint0, aint1, aint2)
+        val bytes = JStruct.pack(struct, elements)
         println("bytes:${HexUtil.bytesToHexSpace(bytes)}")
         val values = JStruct.unpack(struct, bytes)
-        assertEquals(aint0,values[0])
-        assertEquals(aint1,values[1])
-        assertEquals(aint2,values[2])
+        assertEquals(aint0, values[0])
+        assertEquals(aint1, values[1])
+        assertEquals(aint2, values[2])
     }
+
     @Test
     fun testCharType() {
         val struct = "(1+2+3)c"
@@ -87,27 +88,51 @@ internal class JStructTest {
     }
 
     @Test
-    fun testComplexType() {
-        val struct ="1i2[1i10s]"
+    fun testComplexArrayType() {
+        val struct = "1i2[1i10s]"
         val s = "0123456789"
-        val slen :Int = s.toByteArray(JStruct.charset).size
-        val complex = listOf<Any>(slen,s)
-        val complexArray :List<Any> = listOf(complex,complex)
+        val slen: Int = s.toByteArray(JStruct.charset).size
+        val complex = listOf<Any>(slen, s)
+        val complexArray: List<Any> = listOf(complex, complex)
 
-        val clen :Int= 2
-        val elements:List<Any> = listOf(clen,complexArray)
-        val bytes = JStruct.pack(struct,elements)
+        val clen: Int = 2
+        val elements: List<Any> = listOf(clen, complexArray)
+        val bytes = JStruct.pack(struct, elements)
         println("bytes:${HexUtil.bytesToHexSpace(bytes)}")
 
-        val unpackElements  = JStruct.unpack(struct,bytes)
+        val unpackElements = JStruct.unpack(struct, bytes)
 
-        assertEquals(clen,unpackElements[0])
+        assertEquals(clen, unpackElements[0])
 
         val unpackComplexArray = unpackElements[1] as List<Any>
         val unpackComplex = unpackComplexArray[0] as List<Any>
 
-        for(i in complex.indices){
-            assertEquals(complex[i],unpackComplex[i])
+        for (i in complex.indices) {
+            assertEquals(complex[i], unpackComplex[i])
+        }
+
+    }
+
+    @Test
+    fun testComplexType() {
+        val struct = "1i1[1i10s]"
+        val s = "0123456789"
+        val slen: Int = s.toByteArray(JStruct.charset).size
+        val complex = listOf<Any>(slen, s)
+
+        val clen: Int = 2
+        val elements: List<Any> = listOf(clen, complex)
+        val bytes = JStruct.pack(struct, elements)
+        println("bytes:${HexUtil.bytesToHexSpace(bytes)}")
+
+        val unpackElements = JStruct.unpack(struct, bytes)
+
+        assertEquals(clen, unpackElements[0])
+
+        val unpackComplex = unpackElements[1] as List<Any>
+
+        for (i in complex.indices) {
+            assertEquals(complex[i], unpackComplex[i])
         }
 
     }
