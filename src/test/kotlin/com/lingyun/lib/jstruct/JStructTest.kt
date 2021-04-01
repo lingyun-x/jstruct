@@ -71,5 +71,31 @@ internal class JStructTest {
         assertEquals(s, elements[1])
     }
 
+    @Test
+    fun testComplexType() {
+        val struct ="1i2[1i10s]"
+        val s = "0123456789"
+        val slen :Int = s.toByteArray(JStruct.charset).size
+        val complex = listOf<Any>(slen,s)
+        val complexArray :List<Any> = listOf(complex,complex)
+
+        val clen :Int= 2
+        val elements:List<Any> = listOf(clen,complexArray)
+        val bytes = JStruct.pack(struct,elements)
+        println("bytes:${HexUtil.bytesToHexSpace(bytes)}")
+
+        val unpackElements  = JStruct.unpack(struct,bytes)
+
+        assertEquals(clen,unpackElements[0])
+
+        val unpackComplexArray = unpackElements[1] as List<Any>
+        val unpackComplex = unpackComplexArray[0] as List<Any>
+
+        for(i in complex.indices){
+            assertEquals(complex[i],unpackComplex[i])
+        }
+
+    }
+
 
 }

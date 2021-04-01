@@ -37,9 +37,11 @@ internal class BasicTypeSampleTest {
         val adouble: Double = 2.2
 
         val elements = listOf<Any>(aByte, aUByte, aShort, aUShort, aInt, aUInt, along, afloat, adouble)
-        val bytes = JStruct.newPackContext(struct, elements).pack()
+        val bytes = JStruct.pack(struct,elements)
         println("bytes:${HexUtil.bytesToHexSpace(bytes)}")
 
+        val unpackElements = JStruct.unpack(struct,bytes)
+        println(elements.containsAll(unpackElements))
 
         val results = JStruct.newUnPackContext(struct, bytes).unpack()
 
@@ -58,7 +60,7 @@ internal class BasicTypeSampleTest {
         val len = 10
         val bs = (0..9).toList().map { it.toByte() }.toByteArray()
         val elements = listOf<Any>(len, bs)
-        val result = JStruct.newPackContext(struct, elements).pack()
+        val result = JStruct.pack(struct,elements)
 
         val byteBuffer = ByteBuffer.wrap(result)
         val i1 = byteBuffer.getInt()
@@ -71,12 +73,13 @@ internal class BasicTypeSampleTest {
 
         println("bytes:${HexUtil.bytesToHexSpace(result)}")
 
-        val elements2 = JStruct.newUnPackContext(struct, result).unpack()
+        val elements2 = JStruct.unpack(struct,result)
 
         val aint = elements2.get(0) as Int
         val abytearray = elements2.get(1) as ByteArray
 
         assertEquals(aint, len)
+        abytearray.contentEquals(bs)
 
         for (i in bs.indices) {
             assertEquals(abytearray[i], bs[i])
@@ -90,7 +93,7 @@ internal class BasicTypeSampleTest {
         val len = 10
         val hs = (0..9).toList().map { it.toShort() }.toShortArray()
         val elements = listOf<Any>(len, hs)
-        val result = JStruct.newPackContext(struct, elements).pack()
+        val result = JStruct.pack(struct,elements)
 
         val byteBuffer = ByteBuffer.wrap(result)
         val i1 = byteBuffer.getInt()
@@ -103,7 +106,7 @@ internal class BasicTypeSampleTest {
 
         println("bytes:${HexUtil.bytesToHexSpace(result)}")
 
-        val elements2 = JStruct.newUnPackContext(struct, result).unpack()
+        val elements2 = JStruct.unpack(struct,result)
 
         val aint = elements2.get(0) as Int
         val ashortarray = elements2.get(1) as ShortArray
@@ -170,7 +173,7 @@ internal class BasicTypeSampleTest {
         val elements = ArrayList<Any>()
         elements.add(complex1)
 
-        val bytes = JStruct.newPackContext(struct, elements).pack()
+        val bytes = JStruct.pack(struct,elements)
 
         println("bytes:${HexUtil.bytesToHexSpace(bytes)}")
 
@@ -248,7 +251,7 @@ internal class BasicTypeSampleTest {
         elements.add(ab)
         elements.add(complex1)
 
-        val bytes = JStruct.newPackContext(struct, elements).pack()
+        val bytes = JStruct.pack(struct,elements)
 
         println("bytes:${HexUtil.bytesToHexSpace(bytes)}")
 
@@ -325,7 +328,7 @@ internal class BasicTypeSampleTest {
         elements.add(ab)
         elements.add(complex1)
 
-        val bytes = JStruct.newPackContext(struct, elements).pack()
+        val bytes = JStruct.pack(struct,elements)
 
         println("bytes:${HexUtil.bytesToHexSpace(bytes)}")
 
