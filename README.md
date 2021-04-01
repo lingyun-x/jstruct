@@ -204,7 +204,6 @@ for(i in complex.indices){
 ```
 
 
-
 ### Numeric expression
 
 ```kotlin
@@ -225,4 +224,3 @@ assertEquals(aint, len)
 println(abytearray.contentEquals(bs))
 //true
 ```
-
