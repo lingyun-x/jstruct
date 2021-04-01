@@ -118,15 +118,20 @@ class UnpackContext(
             }
             is ComplexDataType -> {
                 val complexStruct = ctx.expression.substring(dataType.structStartIndex, dataType.structEndIndex)
-                val values = ArrayList<Any>()
 
-                for (i in 0 until number) {
+                if (number == 1) {
                     val unpackContext = UnpackContext(complexStruct, byteBuffer)
                     val vs = unpackContext.unpack()
-                    values.add(vs)
+                    result.add(vs)
+                } else {
+                    val values = ArrayList<Any>()
+                    for (i in 0 until number) {
+                        val unpackContext = UnpackContext(complexStruct, byteBuffer)
+                        val vs = unpackContext.unpack()
+                        values.add(vs)
+                    }
+                    result.add(values)
                 }
-
-                result.add(values)
             }
             else -> {
                 throw IllegalArgumentException("not support this type:${dataType::class}")
