@@ -21,15 +21,17 @@ import java.nio.ByteBuffer
 * limitations under the License.
 */
 class PackContext(
-    val struct: String,
+    struct: String,
     val byteBuffer: ByteBuffer,
     val elements: List<Any> = ArrayList(),
-) {
-    val ctx: NumberEnvironmentExpressionParser.ExpressionContext
+    ctx: NumberEnvironmentExpressionParser.ExpressionContext = NumberEnvironmentExpressionParser.ExpressionContext(
+        struct,
+        0,
+        struct.length,
+        elements
+    )
+) : JStructContext(struct, ctx) {
 
-    init {
-        ctx = NumberEnvironmentExpressionParser.ExpressionContext(struct, 0, struct.length, elements)
-    }
 
     fun pack(): ByteArray {
         while (ctx.expressionStartIndex < ctx.expressionEndIndex) {
@@ -39,72 +41,6 @@ class PackContext(
             write(type, number)
         }
         return byteBuffer.array().sliceArray(0 until byteBuffer.position())
-    }
-
-    fun getNextNumber(): Int {
-        val expressionEndIndex = ctx.expressionEndIndex
-
-        //find number expression
-        var eei = ctx.expressionStartIndex
-        while (eei < ctx.expressionEndIndex) {
-            when (ctx.expression[eei]) {
-                in '0'..'9', '(', ')', '@', '+', '-', '*', '/' -> {
-                    eei++
-                }
-                else -> {
-                    break
-                }
-            }
-        }
-
-        ctx.expressionEndIndex = eei
-        val result = ctx.getNumber().toInt()
-
-        ctx.expressionEndIndex = expressionEndIndex
-        return result
-    }
-
-    fun getNextType(): IStrcutDataType {
-        val c = ctx.expression[ctx.expressionStartIndex]
-        return when (c) {
-            'b', 'B', 'c', 'h', 'H', 'i', 'I', 'l', 'f', 'd' -> {
-                ctx.expressionStartIndex++
-                BasicDataType(c)
-            }
-            's' -> {
-                ctx.expressionStartIndex++
-                StringDataType()
-            }
-            '[' -> {
-                ctx.expressionStartIndex++
-                val endIndex = StringUtil.findClosingCharIndex(
-                    ctx.expression,
-                    ctx.expressionStartIndex,
-                    ctx.expressionEndIndex,
-                    '[',
-                    ']'
-                )
-                if (endIndex == -1) {
-                    throw ExpressionException("index:${ctx.expressionStartIndex - 1} char [ not find closing char ]")
-                }
-
-                val typeExpression = ctx.expression.substring(ctx.expressionStartIndex, endIndex).trim()
-                if (typeExpression.isEmpty()) {
-                    throw ExpressionException("index:${ctx.expressionStartIndex} array must have a type")
-                }
-
-                if (typeExpression.length == 1) {
-                    ctx.expressionStartIndex = endIndex + 1
-                    return ArrayDataType(typeExpression[0])
-                }
-                val type = ComplexDataType(typeExpression, ctx.expressionStartIndex, endIndex)
-                ctx.expressionStartIndex = endIndex + 1
-                return type
-            }
-            else -> {
-                throw ExpressionException("index:${ctx.expressionStartIndex} not supprt this typs:${c}")
-            }
-        }
     }
 
     fun write(type: IStrcutDataType, number: Int) {
