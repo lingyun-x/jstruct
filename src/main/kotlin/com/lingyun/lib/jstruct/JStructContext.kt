@@ -55,10 +55,7 @@ open class JStructContext(
         }
 
         ctx.expressionEndIndex = eei
-//        println("[${ctx.expressionStartIndex}-${ctx.expressionEndIndex}] ${ctx.expression.substring(ctx.expressionStartIndex,ctx.expressionEndIndex)}")
         val result = ctx.getNumber().toInt()
-//        println("getNextNumber:$result")
-
         ctx.expressionEndIndex = expressionEndIndex
         return result
     }

@@ -6,7 +6,7 @@ Interpret bytes as packed binary data
 ### Gradle
 
 ```groovy
-implemention 'com.lingyun.lib:jstruct:0.1.1'
+implemention 'com.lingyun.lib:jstruct:0.1.2'
 ```
 
 ### Maven
@@ -15,7 +15,7 @@ implemention 'com.lingyun.lib:jstruct:0.1.1'
 <dependency>
   <groupId>com.lingyun.lib</groupId>
   <artifactId>jstruct</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
 </dependency>
 ```
 

@@ -1,8 +1,10 @@
 package com.lingyun.lib.jstruct
 
+import com.lingyun.lib.jstruct.exception.ExpressionException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.charset.Charset
+import kotlin.jvm.Throws
 
 /*
 * Created by mc_luo on 2021/3/23 .
@@ -27,14 +29,28 @@ object JStruct {
     var byteOrder: ByteOrder = ByteOrder.BIG_ENDIAN
     var charset: Charset = Charset.forName("UTF-8")
 
+    @Throws(ExpressionException::class)
     fun pack(struct: String, elements: List<Any>): ByteArray {
-        val context = newPackContext(struct, elements)
-        return context.pack()
+        try {
+            val context = newPackContext(struct, elements)
+            return context.pack()
+        } catch (e: ExpressionException) {
+            throw e
+        } catch (e: Exception) {
+            throw ExpressionException("struct:$struct not match elements!!")
+        }
     }
 
+    @Throws(ExpressionException::class)
     fun unpack(struct: String, data: ByteArray): List<Any> {
-        val context = newUnPackContext(struct, data)
-        return context.unpack()
+        try {
+            val context = newUnPackContext(struct, data)
+            return context.unpack()
+        } catch (e: ExpressionException) {
+            throw e
+        } catch (e: Exception) {
+            throw ExpressionException("struct:$struct not match data")
+        }
     }
 
     fun newPackContext(struct: String, elements: List<Any>): PackContext {

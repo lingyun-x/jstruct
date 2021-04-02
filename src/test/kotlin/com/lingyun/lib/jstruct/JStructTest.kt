@@ -142,7 +142,7 @@ internal class JStructTest {
     @Test
     fun testComplex() {
         val struct = "1{4i}1b1B1h1H1i1I1l1f1d1i@-1[b]1i@-1[h]1i@-1[i]"
-        val head = listOf<Any>(0x01,0x02,0x03,0x04)
+        val head = listOf<Any>(0x01, 0x02, 0x03, 0x04)
 
         val aByte: Byte = 0
         val aUByte: Short = 0
@@ -168,19 +168,47 @@ internal class JStructTest {
 
         val intArray: IntArray = intArrayOf(0x01020304, 0x07060504)
 
-        val elements = listOf<Any>(head,aByte,aUByte,aShort,aUShort,aInt,aUInt,aLong,aFloat,aDouble,
-            byteArrayLen,byteArray,shortArrayLen,shortArray,intArrayLen,intArray)
+        val elements = listOf<Any>(
+            head, aByte, aUByte, aShort, aUShort, aInt, aUInt, aLong, aFloat, aDouble,
+            byteArrayLen, byteArray, shortArrayLen, shortArray, intArrayLen, intArray
+        )
 
         val bytes = JStruct.pack(struct, elements)
 
         println("bytes:${HexUtil.bytesToHexSpace(bytes)}")
 
-        val unpackElements = JStruct.unpack(struct,bytes)
+        val unpackElements = JStruct.unpack(struct, bytes)
 
-        val unpackBytes = JStruct.pack(struct,unpackElements)
+        val unpackBytes = JStruct.pack(struct, unpackElements)
 
         assert(unpackBytes.contentEquals(bytes))
 
+    }
+
+    @Test
+    fun testComplex2() {
+        val struct = "1{1b1b1i1i}1i@-1[1b1B1h1H1i1I1l1f1d]1b1{1b1B1h1H1i1I1l1f1d}"
+
+        val head = listOf<Any>(0x01.toByte(), 0x02.toByte(), 0x01020304, 0x05060708)
+
+        val complexLen: Int = 2
+        val complex = listOf<Any>(
+            0x01.toByte(), 0xff.toByte().toShort(),
+            0x40ff.toShort(), 0xff40,
+            0x1f2f3f4f, 0xf1f2f3f4L,
+            0x1a2a3a4a5a6a7a8aL, 0.1f, 0.2
+        )
+
+        val aByte: Byte = 0x18
+        val elements = listOf<Any>(head, complexLen, listOf<Any>(complex, complex), aByte, complex)
+
+        val bytes = JStruct.pack(struct,elements)
+        println("bytes:${HexUtil.bytesToHexSpace(bytes)}")
+
+        val unpackElements = JStruct.unpack(struct,bytes)
+        val unpackBytes = JStruct.pack(struct,unpackElements)
+
+        assert(bytes.contentEquals(unpackBytes))
     }
 
 
