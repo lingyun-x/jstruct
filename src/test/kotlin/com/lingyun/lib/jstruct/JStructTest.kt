@@ -139,5 +139,49 @@ internal class JStructTest {
 
     }
 
+    @Test
+    fun testComplex() {
+        val struct = "1{4i}1b1B1h1H1i1I1l1f1d1i@-1[b]1i@-1[h]1i@-1[i]"
+        val head = listOf<Any>(0x01,0x02,0x03,0x04)
+
+        val aByte: Byte = 0
+        val aUByte: Short = 0
+
+        val aShort: Short = 0
+        val aUShort: Int = 0
+        val aInt: Int = 0
+        val aUInt: Long = 0L
+
+        val aLong: Long = 0L
+        val aFloat: Float = 0.0f
+        val aDouble: Double = 0.0
+
+        val byteArrayLen: Int = 2
+
+        val byteArray: ByteArray = byteArrayOf(0x01, 0x02)
+
+        val shortArrayLen: Int = 2
+
+        val shortArray: ShortArray = shortArrayOf(0x7f01, 0x7f02)
+
+        val intArrayLen: Int = 2
+
+        val intArray: IntArray = intArrayOf(0x01020304, 0x07060504)
+
+        val elements = listOf<Any>(head,aByte,aUByte,aShort,aUShort,aInt,aUInt,aLong,aFloat,aDouble,
+            byteArrayLen,byteArray,shortArrayLen,shortArray,intArrayLen,intArray)
+
+        val bytes = JStruct.pack(struct, elements)
+
+        println("bytes:${HexUtil.bytesToHexSpace(bytes)}")
+
+        val unpackElements = JStruct.unpack(struct,bytes)
+
+        val unpackBytes = JStruct.pack(struct,unpackElements)
+
+        assert(unpackBytes.contentEquals(bytes))
+
+    }
+
 
 }

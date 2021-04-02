@@ -66,19 +66,19 @@ fun ByteBuffer.readUShortArray(size: Int): IntArray {
 fun ByteBuffer.readIntArray(size: Int): IntArray {
     val ints = IntArray(size)
     for (i in 0 until size) {
-        val i = getInt()
-        ints[i] = i
+        val values = getInt()
+        ints[i] = values
     }
     return ints
 }
 
 fun ByteBuffer.readUIntArray(size: Int): LongArray {
-    val ints = LongArray(size)
+    val longs = LongArray(size)
     for (i in 0 until size) {
         val l = getInt().toUInt().toLong()
-        ints[i] = l
+        longs[i] = l
     }
-    return ints
+    return longs
 }
 
 fun ByteBuffer.readLongArray(size: Int): LongArray {
