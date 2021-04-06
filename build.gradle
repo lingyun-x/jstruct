@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm' version '1.4.31'
     id("maven-publish")
+    id 'signing'
 }
 
 group 'com.lingyun.lib'
@@ -17,8 +18,16 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 }
 
+signing {
+    useGpgCmd()
+    sign publishing.publications.mavenJava
+}
+
 publishing {
     repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+        }
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/lingyun-x/jstruct")
