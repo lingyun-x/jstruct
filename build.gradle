@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'com.lingyun.lib'
-version '0.1.2'
+version '0.2.1'
 
 repositories {
     mavenCentral()
@@ -34,4 +34,44 @@ publishing {
         }
     }
 }
+
+//publishing {
+//    repositories {
+//        maven {
+//            name = "central"
+//            // change to point to your repo, e.g. http://my.org/repo
+//            url = "https://repo1.maven.org/maven2"
+//        }
+//    }
+//    publications {
+//        mavenJava(MavenPublication) {
+//            from components.java
+//            versionMapping {
+//                usage('java-api') {
+//                    fromResolutionOf('runtimeClasspath')
+//                }
+//                usage('java-runtime') {
+//                    fromResolutionResult()
+//                }
+//            }
+//            pom {
+//                name = "jstruct"
+//                description = 'Interpret bytes as packed binary data'
+//                licenses {
+//                    license {
+//                        name = 'The Apache License, Version 2.0'
+//                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+//                    }
+//                }
+//                developers {
+//                    developer {
+//                        id = 'lingyun'
+//                        name = 'Luo lingfeng'
+//                        email = '463027714@qq.com'
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 

@@ -27,4 +27,7 @@ class ArrayComplexDataType(val typeExpression: String, val structStartIndex: Int
 
 class ComplexDataType(val typeExpression: String, val structStartIndex: Int, val structEndIndex: Int) : IStrcutDataType
 
+class EmbedComplexDataType(val typeExpression: String, val structStartIndex: Int, val structEndIndex: Int) :
+    IStrcutDataType
+
 class StringDataType() : IStrcutDataType

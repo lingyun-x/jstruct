@@ -119,6 +119,28 @@ open class JStructContext(
                 ctx.expressionStartIndex = endIndex + 1
                 return type
             }
+            '<' -> {
+                ctx.expressionStartIndex++
+                val endIndex = StringUtil.findClosingCharIndex(
+                    ctx.expression,
+                    ctx.expressionStartIndex,
+                    ctx.expressionEndIndex,
+                    '<',
+                    '>'
+                )
+                if (endIndex == -1) {
+                    throw ExpressionException("index:${ctx.expressionStartIndex - 1} char ( not find closing char )")
+                }
+
+                val typeExpression = ctx.expression.substring(ctx.expressionStartIndex, endIndex).trim()
+                if (typeExpression.isEmpty()) {
+                    throw ExpressionException("index:${ctx.expressionStartIndex} array must have a type")
+                }
+
+                val type = EmbedComplexDataType(typeExpression, ctx.expressionStartIndex, endIndex)
+                ctx.expressionStartIndex = endIndex + 1
+                return type
+            }
             else -> {
                 throw ExpressionException("index:${ctx.expressionStartIndex} not supprt this typs:${c}")
             }

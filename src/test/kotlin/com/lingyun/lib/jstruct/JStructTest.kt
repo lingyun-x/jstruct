@@ -202,14 +202,52 @@ internal class JStructTest {
         val aByte: Byte = 0x18
         val elements = listOf<Any>(head, complexLen, listOf<Any>(complex, complex), aByte, complex)
 
-        val bytes = JStruct.pack(struct,elements)
+        val bytes = JStruct.pack(struct, elements)
         println("bytes:${HexUtil.bytesToHexSpace(bytes)}")
 
-        val unpackElements = JStruct.unpack(struct,bytes)
-        val unpackBytes = JStruct.pack(struct,unpackElements)
+        val unpackElements = JStruct.unpack(struct, bytes)
+        val unpackBytes = JStruct.pack(struct, unpackElements)
 
         assert(bytes.contentEquals(unpackBytes))
     }
 
+
+    @Test
+    fun testEmbedComplex2() {
+        val struct = "1<1b1b1i1i>1i@-1[1b1B1h1H1i1I1l1f1d]1b1{1b1B1h1H1i1I1l1f1d}"
+
+        val head = listOf<Any>(0x01.toByte(), 0x02.toByte(), 0x01020304, 0x05060708)
+
+        val complexLen: Int = 2
+        val complex = listOf<Any>(
+            0x01.toByte(), 0xff.toByte().toShort(),
+            0x40ff.toShort(), 0xff40,
+            0x1f2f3f4f, 0xf1f2f3f4L,
+            0x1a2a3a4a5a6a7a8aL, 0.1f, 0.2
+        )
+
+        val aByte: Byte = 0x18
+
+        val elements = mutableListOf<Any>(complexLen, listOf<Any>(complex, complex), aByte, complex)
+        elements.addAll(0, head)
+
+        val bytes = JStruct.pack(struct, elements)
+        println("bytes:${HexUtil.bytesToHexSpace(bytes)}")
+
+        val unpackElements = JStruct.unpack(struct, bytes)
+        val unpackBytes = JStruct.pack(struct, unpackElements)
+
+        assert(bytes.contentEquals(unpackBytes))
+    }
+
+    @Test
+    fun testGetCount() {
+        val struct = "@-1<1b1i>"
+        val elements = listOf<Any>(2,0x01.toByte(),0xf0,0x02.toByte(),0xf1)
+
+        val count = JStruct.getCount(struct,elements,1)
+
+        assertEquals(2,count)
+    }
 
 }

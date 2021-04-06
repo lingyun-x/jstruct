@@ -124,6 +124,14 @@ class UnpackContext(
                     result.add(vs)
                 }
             }
+            is EmbedComplexDataType -> {
+                val complexStruct = ctx.expression.substring(dataType.structStartIndex, dataType.structEndIndex)
+                for (i in 0 until number) {
+                    val unpackContext = UnpackContext(complexStruct, byteBuffer)
+                    val vs = unpackContext.unpack()
+                    result.addAll(vs)
+                }
+            }
             is ArrayComplexDataType -> {
                 val complexStruct = ctx.expression.substring(dataType.structStartIndex, dataType.structEndIndex)
                 val values = ArrayList<Any>()

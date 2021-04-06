@@ -101,6 +101,16 @@ class PackContext(
                     packContext2.pack()
                 }
             }
+            is EmbedComplexDataType -> {
+                val complexStruct = ctx.expression.substring(type.structStartIndex, type.structEndIndex)
+
+                for (i in 0 until number) {
+                    val complexElementList = elements.subList(ctx.currentElementIndex, elements.size) as List<Any>
+                    val packContext2 = PackContext(complexStruct, byteBuffer, complexElementList)
+                    packContext2.pack()
+                    ctx.currentElementIndex += packContext2.ctx.currentElementIndex
+                }
+            }
             is ArrayComplexDataType -> {
                 val complexStruct = ctx.expression.substring(type.structStartIndex, type.structEndIndex)
                 val complexElementList = elements[ctx.currentElementIndex++] as List<Any>

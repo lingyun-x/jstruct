@@ -42,6 +42,20 @@ object JStruct {
     }
 
     @Throws(ExpressionException::class)
+    fun getCount(struct: String, elements: List<Any>, currentElementIndex: Int): Int {
+        try {
+            val context = newPackContext(struct, elements)
+            context.ctx.currentElementIndex = currentElementIndex
+            val count = context.getNextNumber()
+            return count
+        } catch (e: ExpressionException) {
+            throw e
+        } catch (e: Exception) {
+            throw ExpressionException("struct:$struct not match elements!!")
+        }
+    }
+
+    @Throws(ExpressionException::class)
     fun unpack(struct: String, data: ByteArray): List<Any> {
         try {
             val context = newUnPackContext(struct, data)
