@@ -1,12 +1,21 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        //Needed only for SNAPSHOT versions
+        //maven { url "http://oss.sonatype.org/content/repositories/snapshots/" }
+    }
+}
+
 plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm' version '1.4.31'
-    id("maven-publish")
+    id 'maven-publish'
     id 'signing'
 }
 
-group 'com.lingyun.lib'
-version '0.2.1'
+group 'com.lingyun-x'
+version '0.2.4'
+
 
 repositories {
     mavenCentral()
@@ -18,69 +27,64 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "central"
+            url = uri(nexusUrl)
+            credentials {
+                username = project.findProperty("nexusUsername") ?: System.getenv("NEXUS_USERNAME")
+                password = project.findProperty("nexusPassword") ?: System.getenv("NEXUS_PASSWORD")
+            }
+        }
+    }
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+            pom {
+                name = "jstruct"
+                url = 'https://github.com/lingyun-x/jstruct'
+                description = 'Interpret bytes as packed binary data'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'lingyun'
+                        name = 'luolingfeng'
+                        email = '463027714@qq.com'
+                    }
+                }
+
+                scm {
+                    connection = 'scm:git:git://github.com/lingyun-x/jstruct.git'
+                    developerConnection = 'scm:git:ssh://github.com/lingyun-x/jstruct.git'
+                    url = 'https://github.com/lingyun-x/jstruct/'
+                }
+            }
+        }
+    }
+}
+
 signing {
     useGpgCmd()
     sign publishing.publications.mavenJava
 }
 
-publishing {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-        }
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/lingyun-x/jstruct")
-            credentials {
-                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
-                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_MAVEN_TOKEN")
-            }
-        }
-    }
-    publications {
-        gpr(MavenPublication) {
-            from(components.java)
-        }
-    }
-}
-
-//publishing {
-//    repositories {
-//        maven {
-//            name = "central"
-//            // change to point to your repo, e.g. http://my.org/repo
-//            url = "https://repo1.maven.org/maven2"
-//        }
-//    }
-//    publications {
-//        mavenJava(MavenPublication) {
-//            from components.java
-//            versionMapping {
-//                usage('java-api') {
-//                    fromResolutionOf('runtimeClasspath')
-//                }
-//                usage('java-runtime') {
-//                    fromResolutionResult()
-//                }
-//            }
-//            pom {
-//                name = "jstruct"
-//                description = 'Interpret bytes as packed binary data'
-//                licenses {
-//                    license {
-//                        name = 'The Apache License, Version 2.0'
-//                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-//                    }
-//                }
-//                developers {
-//                    developer {
-//                        id = 'lingyun'
-//                        name = 'Luo lingfeng'
-//                        email = '463027714@qq.com'
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
 
