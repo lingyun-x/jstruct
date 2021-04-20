@@ -9,8 +9,6 @@ buildscript {
 plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm' version '1.4.31'
-    id 'maven-publish'
-    id 'signing'
 }
 
 group 'com.lingyun-x'
@@ -25,66 +23,6 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-}
-
-java {
-    withSourcesJar()
-    withJavadocJar()
-}
-
-publishing {
-    repositories {
-        maven {
-            name = "central"
-            url = uri(nexusUrl)
-            credentials {
-                username = project.findProperty("nexusUsername") ?: System.getenv("NEXUS_USERNAME")
-                password = project.findProperty("nexusPassword") ?: System.getenv("NEXUS_PASSWORD")
-            }
-        }
-    }
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            versionMapping {
-                usage('java-api') {
-                    fromResolutionOf('runtimeClasspath')
-                }
-                usage('java-runtime') {
-                    fromResolutionResult()
-                }
-            }
-            pom {
-                name = "jstruct"
-                url = 'https://github.com/lingyun-x/jstruct'
-                description = 'Interpret bytes as packed binary data'
-                licenses {
-                    license {
-                        name = 'The Apache License, Version 2.0'
-                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-                developers {
-                    developer {
-                        id = 'lingyun'
-                        name = 'luolingfeng'
-                        email = '463027714@qq.com'
-                    }
-                }
-
-                scm {
-                    connection = 'scm:git:git://github.com/lingyun-x/jstruct.git'
-                    developerConnection = 'scm:git:ssh://github.com/lingyun-x/jstruct.git'
-                    url = 'https://github.com/lingyun-x/jstruct/'
-                }
-            }
-        }
-    }
-}
-
-signing {
-    useGpgCmd()
-    sign publishing.publications.mavenJava
 }
 
 
